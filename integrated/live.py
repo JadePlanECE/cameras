@@ -20,7 +20,7 @@ def main():
         proc.wait()
     except KeyboardInterrupt:
         proc.terminate()
-        print("The END")
+        print("Live ended")
 
 if __name__ == "__main__":
     main()
