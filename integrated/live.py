@@ -1,3 +1,8 @@
+"""
+Live from from integrated camera without recording
+Displays the camera stream directly on Jetson using GStreamer
+"""
+
 import subprocess
 
 def main():

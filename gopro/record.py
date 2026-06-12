@@ -1,6 +1,6 @@
 """
-Python test file to try to connect with a GoPro HERO13 Black.
-Need to turn on the cam first (click on buttons of cam if not detected).
+Record video of a preselected time, and put it into the outputs folder
+Need to turn on the cam first (click on buttons of cam if not detected)
 """
 
 import os
@@ -8,7 +8,7 @@ import asyncio
 from open_gopro import WiredGoPro, constants
 import httpx
 
-OUTPUT_DIR = "../outputs"
+OUTPUT_DIR = "./outputs"
 TIME = 10
 
 async def main():
@@ -74,8 +74,9 @@ async def main():
                 return
 
         # Launch video playback on Jetson
+        abs_output_path = os.path.abspath(output_path)
         gst_cmd = (
-            f"gst-launch-1.0 filesrc location=/home/hand-e/Documents/gopro/{output_path} ! "
+            f"gst-launch-1.0 filesrc location={abs_output_path} ! "
             f"qtdemux name=demux demux.video_0 ! "
             f"h265parse ! "
             f"nvv4l2decoder ! "
