@@ -1,0 +1,5 @@
+numpy
+pandas
+open-gopro
+httpx
+opencv-python
