@@ -1,19 +1,6 @@
 # Cameras
 
-Structure of the code:
-```
-├── gopro
-│   ├── live_test.py
-│   ├── test.py
-├── integrated
-│   ├── live.py
-│   ├── save_video.py
-│   ├── test.py
-├── outputs
-│   ├── ...
-├── README.md
-└── requirements.txt
-```
+The aim of this repo is to compare 2 types of camera (GoPro and built-int camera / integrated camera)
 
 
 ## Virtual Environment
@@ -54,3 +41,13 @@ deactivate
 ```
 rm -rf cam
 ```
+
+## Launch comparaison of cameras
+
+Run the following command.
+```
+python cameras_comparaison.py
+```
+
+You can also add arguments:
+- Name of the config wanted (default = "1080p60") `--name`
