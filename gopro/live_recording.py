@@ -7,16 +7,14 @@ Then put it into outputs folder
 import os
 import time
 import asyncio
+import argparse
 import subprocess
 from open_gopro import WiredGoPro
 
-OUTPUT_DIR = "./outputs"
-
-async def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+async def main(output_dir, width, height, fps):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = f"gopro_{timestamp}.mp4"
-    output_path = os.path.join(OUTPUT_DIR, filename)
+    output_path = os.path.join(output_dir, filename)
 
     async with WiredGoPro() as gopro:
         print("Connecting to GoPro...")
@@ -37,6 +35,7 @@ async def main():
             f"queue ! "
             f"tsdemux ! "
             f"h264parse ! "
+            f"video/x-h264,width={width},height={height},framerate={fps}/1 ! "
             f"qtmux ! "
             f"filesink location={output_path}"
         )
@@ -65,7 +64,14 @@ async def main():
             print("GoPro released successfully.")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=None)
+    parser.add_argument("--output", type=str, default="./outputs", help="Outut directory")
+    parser.add_argument("--width", type=int, default=1920, help="Width of resolution")
+    parser.add_argument("--height", type=int, default=1080, help="Height of resolution")
+    parser.add_argument("--fps", type=int, default=60, help="Framerate per second")
+    args = parser.parse_args()
+
     try:
-        asyncio.run(main())
+        asyncio.run(main(args.output, args.width, args.height, args.fps))
     except KeyboardInterrupt:
         pass
