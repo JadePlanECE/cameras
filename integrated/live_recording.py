@@ -1,7 +1,6 @@
 """
-Record live from from integrated camera
-Displays the camera stream directly on Jetson using GStreamer
-Then put it into outputs folder
+Record live from from integrated camera using GStreamer
+Put the camera stream into outputs folder
 """
 
 import os
@@ -14,17 +13,20 @@ def main(output_dir, width, height, fps):
     filename = f"integrated_{timestamp}.mp4"
     output_path = os.path.join(output_dir, filename)
 
-    record_cmd = (
+    cmd = (
         f"gst-launch-1.0 -e "
         f"v4l2src device=/dev/video0 ! "
-        f"video/x-h264,width={width},height={height},framerate={fps}/1 ! "
-        f"h264parse ! "
-        f"qtmux ! "
-        f"filesink location={output_path}"
+        f"videoconvert ! "
+        f"videoscale ! "
+        f"videorate ! "
+        f"video/x-raw,width={width},height={height},framerate={fps}/1 ! "
+        f"x264enc tune=zerolatency speed-preset=veryfast bitrate=5000 ! "
+        f"mp4mux ! "
+        f'filesink location="{output_path}"'
     )
 
     try:
-        proc = subprocess.Popen(record_cmd, shell=True)
+        proc = subprocess.Popen(cmd, shell=True)
         proc.wait()
         print(f"Recording complete! Saved to {output_path}")
     except KeyboardInterrupt:

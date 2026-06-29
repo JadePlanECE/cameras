@@ -1,7 +1,6 @@
 """
-Record live preview from GoPro HERO13 Black from from integrated camera
-Displays the camera stream directly on Jetson using GStreamer
-Then put it into outputs folder
+Record live from GoPro HERO13 Black using GStreamer
+Put the camera stream into outputs folder
 """
 
 import os
@@ -9,59 +8,71 @@ import time
 import asyncio
 import argparse
 import subprocess
-from open_gopro import WiredGoPro
+from open_gopro import WiredGoPro, constants
 
 async def main(output_dir, width, height, fps):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = f"gopro_{timestamp}.mp4"
     output_path = os.path.join(output_dir, filename)
 
+    SUPPORTED = {
+        1080: [30, 60],
+        720: [30, 60, 120],
+        480: [30, 60, 120],
+    }
+
+    if fps not in SUPPORTED.get(height, []):
+        print(f"Warning: {fps}fps not guaranteed for {height}p webcam mode")
+
     async with WiredGoPro() as gopro:
         print("Connecting to GoPro...")
-        
-        preview = await gopro.http_command.webcam_preview()
 
-        if not preview.ok:
-            print("Failed to start preview stream")
+        match height:
+            case 1080: res = constants.WebcamResolution.RES_1080
+            case 720: res = constants.WebcamResolution.RES_720
+            case 480: res = constants.WebcamResolution.RES_480
+            case _: raise ValueError("Unsupported resolution") #res = constants.WebcamResolution.NOT_APPLICABLE
+
+        #resp = await gopro.http_command.webcam_start()
+        resp = await gopro.http_command.webcam_start(
+            resolution=res,
+            fov=constants.WebcamFOV.LINEAR,
+            port=8554,
+            protocol=constants.WebcamProtocol.TS
+        )
+        if not resp.ok:
+            print("Failed to start webcam")
             return
 
-        print("Preview stream started!")
-
-        # GStreamer pipeline to capture UDP stream, parse it, containerize it, and save to disk
-        # -e flag ensures files are closed properly on exit so the MP4 isn't corrupted
-        gst_cmd = (
+        cmd = (
             f"gst-launch-1.0 -e "
-            f"udpsrc port=8554 buffer-size=524288 ! "
-            f"queue ! "
+            f"udpsrc port=8554 caps=\"video/mpegts\" ! "
             f"tsdemux ! "
             f"h264parse ! "
-            f"video/x-h264,width={width},height={height},framerate={fps}/1 ! "
-            f"qtmux ! "
+            f"video/x-h264,fps={fps}/1 ! " # constrain framerate if necessary
+            f"mp4mux ! "
             f"filesink location={output_path}"
         )
 
-        print(f"\nRecording started. Saving to: {output_path}")
-        print("Press Ctrl+C to STOP recording.\n")
-
-        proc = subprocess.Popen(gst_cmd, shell=True)
+        proc = subprocess.Popen(cmd, shell=True)
+        print("Press Ctrl+C to STOP recording\n")
 
         try:
             while proc.poll() is None:
                 await asyncio.sleep(0.5)
-                
-        except asyncio.CancelledError:
-            print("\nStopping recording...")
+
         except KeyboardInterrupt:
             print("\nInterrupted by user. Stopping recording...")
+        except asyncio.CancelledError:
+            print("\nStopping recording...")
         finally:
             if proc.poll() is None:
                 proc.terminate()
                 proc.wait()
-            
+
             print(f"Recording complete! Saved to {output_path}")
             print("Exiting webcam mode on GoPro...")
             await gopro.http_command.webcam_exit()
-            print("GoPro released successfully.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=None)
