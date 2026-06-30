@@ -1,5 +1,5 @@
 """
-File to launch both python files "live_recording.py" (of gopro and integrated cameras)
+Launch both live_recording.py scripts (GoPro + integrated) simultaneously and compare them with the same parameters.
 """
 
 import sys
@@ -7,46 +7,78 @@ import os
 import asyncio
 import argparse
 
-GOPRO_PATH = "./gopro/live_recording.py"
-INTEGRATED_PATH = "./integrated/live_recording.py"
-OUTPUT_DIR = "./outputs"
+INTEGRATED_SCRIPT = os.path.join(os.path.dirname(__file__), "integrated", "live_recording.py")
+GOPRO_SCRIPT = os.path.join(os.path.dirname(__file__), "gopro", "live_recording.py")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
 
-def verify_path(path):
+WIDTH_CHOICES = [3840, 2560, 1920, 1280, 640]
+HEIGHT_CHOICES = [2160, 1440, 1080, 720, 480]
+FPS_CHOICES = [24, 30, 60, 120, 240]
+FOV_CHOICES = ["wide", "narrow", "superview", "linear"]
+SPEED_PRESET_CHOICES = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
+
+def verify_path(path:str):
     if not os.path.exists(path):
         sys.exit(f"[Error] File not found {path}\n")
 
-async def run_script(script_path, resolution, fps):
-    """Launches a python script as an asynchronous subprocess."""
-    print(f"[Starting] {script_path}...")
+async def run_script(label:str, script:str, args:list[str]):
+    """Run a Python script as an async subprocess"""
+    print(f"[{label}] Starting {script}")
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    cmd = [
+        sys.executable, script,
+        "--output", OUTPUT_DIR
+    ] + args
 
-    process = await asyncio.create_subprocess_exec(
-        sys.executable, script_path,
-        "--output", OUTPUT_DIR,
-        "--width", str(resolution[0]),
-        "--height", str(resolution[1]),
-        "--fps", str(fps),
-        stdout=None,
-        stderr=None,
-    )
+    process = await asyncio.create_subprocess_exec(*cmd)
 
     return_code = await process.wait()
-    print(f"[Finished] {script_path} with exit code {return_code}")
+    print(f"[{label}] Finished (exit code {return_code})")
 
-async def main(resolution, fps):
-    verify_path(GOPRO_PATH)
-    verify_path(INTEGRATED_PATH)
+async def main(args:argparse.Namespace):
+    verify_path(GOPRO_SCRIPT)
+    verify_path(INTEGRATED_SCRIPT)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    args_cam = [
+        "--width", str(args.width),
+        "--height", str(args.height),
+        "--fps", str(args.fps),
+        "--bitrate", str(args.bitrate),
+        "--fov", str(args.fov),
+        "--speed-preset", str(args.speed_preset)
+    ]
 
     await asyncio.gather(
-        run_script(GOPRO_PATH, resolution, fps),
-        run_script(INTEGRATED_PATH, resolution, fps)
+        run_script("Gopro", GOPRO_SCRIPT, args_cam),
+        run_script("Integrated", INTEGRATED_SCRIPT, args_cam)
     )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=None)
-    parser.add_argument("--resolution", type=list, default=[1920, 1080], help="Resolution of the camera")
-    parser.add_argument("--fps", type=int, default=30, help="Frame Per Second (fps) of the camera")
+    parser = argparse.ArgumentParser(description="Launching script to compare cameras (GoPro and built-in camera)")
+    parser.add_argument("--width", type=list, default=1280, choices=WIDTH_CHOICES, help="Frame width of the cameras")
+    parser.add_argument("--height", type=list, default=720, choices=HEIGHT_CHOICES, help="Frame height of the cameras")
+    parser.add_argument("--fps", type=int, default=120, choices=FPS_CHOICES, help="Frame Per Second (fps) of the cameras")
+    parser.add_argument("--bitrate", type=int, default=5000, help="Bitrate of the cameras")
+    parser.add_argument("--fov", type=str, default="linear", choices=FOV_CHOICES, help="Field of View of the GoPro")
+    parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the built-in camera")
     args = parser.parse_args()
 
-    asyncio.run(main(args.resolution, args.fps))
+    try:
+        asyncio.run(main(args))
+    except KeyboardInterrupt:
+        print("\n[Main] Interrupted - both recording stopped")
+
+"""
+Optimal parameters for GoPro:
+- resolution: 5.3K [5312,4648]
+- fps: 50 ??
+- lens: linear
+- stabilisation: off
+- shutter speed: 1/480
+- white balance: auto
+- iso min: 100
+- aspect ratio: 16:9
+- ev: 0
+- iso max: 1600
+"""
