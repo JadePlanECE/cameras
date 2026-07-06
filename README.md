@@ -51,3 +51,9 @@ python cameras_comparaison.py
 
 You can also add arguments:
 - Name of the config wanted (default = "1080p60") `--name`
+- Width of the cameras (default = 1280) `--width`
+- Height of the cameras (default = 1920) `--height`
+- Frame Per Second of the cameras (default = 60) `--fps`
+- Bitrate of the cameras, if is None then calculated automatically (default = None) `--bitrate`
+- Field Of View of the GoPro (default = "linear") `--fov`
+- Speed Preset of the built-in camera (default = "veryfast") `--speed-preset`
