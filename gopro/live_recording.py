@@ -26,9 +26,11 @@ FOV_MAP = {
     "linear":    WebcamFOV.LINEAR,
 }
 
+SPEED_PRESET_CHOICES = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
+
 GOPRO_STREAMING_PORT = 8554
 
-async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, fov:str):
+async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, speed_preset:str, fov:str):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = f"gopro_{timestamp}.mp4"
     output_path = os.path.join(output_dir, filename)
@@ -52,11 +54,12 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, fov:
             f"udpsrc port={GOPRO_STREAMING_PORT} "
             f'caps="video/mpegts,systemstream=true" ! '
             f"tsdemux ! "
+            f"queue ! "
             f"h264parse ! "
             f"avdec_h264 ! "
             f"videorate ! "
             f"video/x-raw,framerate={fps}/1 ! "
-            f"x264enc tune=zerolatency speed-preset=veryfast bitrate={bitrate} ! "
+            f"x264enc tune=zerolatency speed-preset={speed_preset} bitrate={bitrate} ! "
             f"h264parse ! "
             f"mp4mux ! "
             f"filesink location={output_path}"
@@ -86,12 +89,12 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, default=1920, help="Width of resolution")
     parser.add_argument("--height", type=int, default=1080, help="Height of resolution")
     parser.add_argument("--fps", type=int, default=60, help="Framerate per second")
-    parser.add_argument("--bitrate", type=int, default=5000, help="Bitrate")
+    parser.add_argument("--bitrate", type=int, default=8000, help="Bitrate")
+    parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the camera")
     parser.add_argument("--fov", type=str, default="linear", choices=FOV_CHOICES, help="Field of View of the GoPro")
-    parser.add_argument("--speed-preset", type=bool, default=False, help=".")
     args = parser.parse_args()
 
     try:
-        asyncio.run(main(args.output, args.width, args.height, args.fps, args.bitrate, args.fov))
+        asyncio.run(main(args.output, args.width, args.height, args.fps, args.bitrate, args.speed_preset, args.fov))
     except KeyboardInterrupt:
         pass

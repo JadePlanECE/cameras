@@ -43,9 +43,9 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, default=1920, help="Width of resolution")
     parser.add_argument("--height", type=int, default=1080, help="Height of resolution")
     parser.add_argument("--fps", type=int, default=60, help="Framerate per second")
-    parser.add_argument("--bitrate", type=int, default=5000, help="Bitrate")
-    parser.add_argument("--fov", type=bool, default=False, help=".")
+    parser.add_argument("--bitrate", type=int, default=8000, help="Bitrate")
     parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the built-in camera")
+    parser.add_argument("--fov", type=bool, default=False, help=".")
     args = parser.parse_args()
 
     try:
