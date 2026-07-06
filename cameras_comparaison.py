@@ -11,9 +11,14 @@ INTEGRATED_SCRIPT = os.path.join(os.path.dirname(__file__), "integrated", "live_
 GOPRO_SCRIPT = os.path.join(os.path.dirname(__file__), "gopro", "live_recording.py")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
 
-WIDTH_CHOICES = [3840, 2560, 1920, 1280, 640]
-HEIGHT_CHOICES = [2160, 1440, 1080, 720, 480]
-FPS_CHOICES = [24, 30, 60, 120, 240]
+# GoPro: 1080 (1920x1080), 2.7k (2704x1520), 4k (3840x2160), 5.3k (5312x2988)
+# Integrated: 640x360, 640x480, 960x540, 1024x576, 1280x720, 1920x1080, 2560x1440, 3840x2160
+WIDTH_CHOICES = [1920, 3840]
+HEIGHT_CHOICES = [1080, 2160]
+# GoPro: 24, 30, 60, 120, 240
+# Integrated: 15, 20, 30
+FPS_CHOICES = [30]
+
 FOV_CHOICES = ["wide", "narrow", "superview", "linear"]
 SPEED_PRESET_CHOICES = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
 
@@ -95,17 +100,3 @@ if __name__ == "__main__":
         asyncio.run(main(args))
     except KeyboardInterrupt:
         print("\n[Main] Interrupted - both recording stopped")
-
-"""
-Optimal parameters for GoPro:
-- resolution: 5.3K [5312,4648]
-- fps: 50 ??
-- lens: linear
-- stabilisation: off
-- shutter speed: 1/480
-- white balance: auto
-- iso min: 100
-- aspect ratio: 16:9
-- ev: 0
-- iso max: 1600
-"""

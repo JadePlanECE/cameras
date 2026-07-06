@@ -49,7 +49,7 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, spee
             return
         print("[GoPro] Webcam started - Launching GStreamer")
 
-        cmd = (
+        cmd = ( # too much process
             f"gst-launch-1.0 -e "
             f"udpsrc port={GOPRO_STREAMING_PORT} "
             f'caps="video/mpegts,systemstream=true" ! '
@@ -64,8 +64,18 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, spee
             f"mp4mux ! "
             f"filesink location={output_path}"
         )
+        cmd_ = (
+            f"gst-launch-1.0 -e "
+            f"udpsrc port={GOPRO_STREAMING_PORT} "
+            f'caps="video/mpegts" ! '
+            f"tsdemux ! "
+            f"h264parse ! "
+            f"video/x-h264,fps={fps}/1 ! "
+            f"mp4mux ! "
+            f"filesink location={output_path}"
+        )
 
-        proc = subprocess.Popen(cmd, shell=True)
+        proc = subprocess.Popen(cmd_, shell=True)
         print("[GoPro] Press Ctrl+C to STOP recording\n")
 
         try:
@@ -88,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="./outputs", help="Outut directory")
     parser.add_argument("--width", type=int, default=1920, help="Width of resolution")
     parser.add_argument("--height", type=int, default=1080, help="Height of resolution")
-    parser.add_argument("--fps", type=int, default=60, help="Framerate per second")
+    parser.add_argument("--fps", type=int, default=30, help="Framerate per second")
     parser.add_argument("--bitrate", type=int, default=8000, help="Bitrate")
     parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the camera")
     parser.add_argument("--fov", type=str, default="linear", choices=FOV_CHOICES, help="Field of View of the GoPro")
