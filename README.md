@@ -53,7 +53,3 @@ You can also add arguments:
 - Width of the cameras (default = 1280) `--width`
 - Height of the cameras (default = 1920) `--height`
 - Frame Per Second of the cameras (default = 30) `--fps`
-- Field Of View of the GoPro (default = "linear") `--fov`
-
-- Bitrate of the cameras, if is None then calculated automatically (default = None) `--bitrate` (not of use)
-- Speed Preset of the built-in camera (default = "veryfast") `--speed-preset` (not of use)
