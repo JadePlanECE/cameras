@@ -18,19 +18,9 @@ HEIGHT_RESOLUTION = {
     480: WebcamResolution.RES_480,
 }
 
-FOV_CHOICES = ["wide", "narrow", "superview", "linear"]
-FOV_MAP = {
-    "wide":      WebcamFOV.WIDE,
-    "narrow":    WebcamFOV.NARROW,
-    "superview": WebcamFOV.SUPERVIEW,
-    "linear":    WebcamFOV.LINEAR,
-}
-
-SPEED_PRESET_CHOICES = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
-
 GOPRO_STREAMING_PORT = 8554
 
-async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, speed_preset:str, fov:str):
+async def main(output_dir:str, width:int, height:int, fps:int):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = f"gopro_{timestamp}.mp4"
     output_path = os.path.join(output_dir, filename)
@@ -40,7 +30,7 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, spee
 
         resp = await gopro.http_command.webcam_start(
             resolution=HEIGHT_RESOLUTION[height],
-            fov=FOV_MAP[fov],
+            fov=WebcamFOV.LINEAR,
             port=GOPRO_STREAMING_PORT,
             protocol=WebcamProtocol.TS
         )
@@ -49,21 +39,6 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, spee
             return
         print("[GoPro] Webcam started - Launching GStreamer")
 
-        cmd = ( # too much process
-            f"gst-launch-1.0 -e "
-            f"udpsrc port={GOPRO_STREAMING_PORT} "
-            f'caps="video/mpegts,systemstream=true" ! '
-            f"tsdemux ! "
-            f"queue ! "
-            f"h264parse ! "
-            f"avdec_h264 ! "
-            f"videorate ! "
-            f"video/x-raw,framerate={fps}/1 ! "
-            f"x264enc tune=zerolatency speed-preset={speed_preset} bitrate={bitrate} ! "
-            f"h264parse ! "
-            f"mp4mux ! "
-            f"filesink location={output_path}"
-        )
         cmd_ = (
             f"gst-launch-1.0 -e "
             f"udpsrc port={GOPRO_STREAMING_PORT} "
@@ -99,12 +74,9 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, default=1920, help="Width of resolution")
     parser.add_argument("--height", type=int, default=1080, help="Height of resolution")
     parser.add_argument("--fps", type=int, default=30, help="Framerate per second")
-    parser.add_argument("--bitrate", type=int, default=8000, help="Bitrate")
-    parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the camera")
-    parser.add_argument("--fov", type=str, default="linear", choices=FOV_CHOICES, help="Field of View of the GoPro")
     args = parser.parse_args()
 
     try:
-        asyncio.run(main(args.output, args.width, args.height, args.fps, args.bitrate, args.speed_preset, args.fov))
+        asyncio.run(main(args.output, args.width, args.height, args.fps))
     except KeyboardInterrupt:
         pass

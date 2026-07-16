@@ -19,32 +19,9 @@ HEIGHT_CHOICES = [1080, 2160]
 # Integrated: 15, 20, 30
 FPS_CHOICES = [30]
 
-FOV_CHOICES = ["wide", "narrow", "superview", "linear"]
-SPEED_PRESET_CHOICES = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
-
 def verify_path(path:str):
     if not os.path.exists(path):
         sys.exit(f"[Error] File not found {path}\n")
-
-def calculate_bitrate(width:int, height:int, fps:int):
-    """
-    Estimate a suitable H.264 bitrate in kbps based on resolution, and fps
-    bitrate = width x height x fps x bits_per_pixel x compression_ratio
-    """
-    bpp = 0.06
-
-    # Base bitrate from formula (in kbps)
-    bitrate = int(width * height * fps * bpp / 1000)
-
-    # High fps costs less per-frame (temporal redundancy is higher),
-    # so apply a mild discount above 60 fps
-    if fps > 60:
-        bitrate = int(bitrate * 0.85)
-
-    # Clamp to sane min/max
-    bitrate = max(1000, min(bitrate, 60_000))
-
-    return round(bitrate, -2)
 
 async def run_script(label:str, script:str, args:list[str]):
     """Run a Python script as an async subprocess"""
@@ -65,20 +42,10 @@ async def main(args:argparse.Namespace):
     verify_path(INTEGRATED_SCRIPT)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    if args.bitrate is None:
-        bitrate = calculate_bitrate(args.width, args.height, args.fps)
-        print(f"[Main] Bitrate calculated: {bitrate}")
-    else:
-        bitrate = args.bitrate
-        print(f"[Main] Bitrate taken: {bitrate}")
-
     args_cam = [
         "--width", str(args.width),
         "--height", str(args.height),
-        "--fps", str(args.fps),
-        "--bitrate", str(bitrate),
-        "--fov", str(args.fov),
-        "--speed-preset", str(args.speed_preset)
+        "--fps", str(args.fps)
     ]
 
     await asyncio.gather(
@@ -91,9 +58,6 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, default=1920, choices=WIDTH_CHOICES, help="Width of the cameras")
     parser.add_argument("--height", type=int, default=1080, choices=HEIGHT_CHOICES, help="Height of the cameras")
     parser.add_argument("--fps", type=int, default=30, choices=FPS_CHOICES, help="Frame Per Second (fps) of the cameras")
-    parser.add_argument("--bitrate", type=int, default=None, help="Bitrate of the cameras (if None then calculated automatically)")
-    parser.add_argument("--speed-preset", type=str, default="veryfast", choices=SPEED_PRESET_CHOICES, help="Speed Preset of the camera")
-    parser.add_argument("--fov", type=str, default="linear", choices=FOV_CHOICES, help="Field Of View (fov) of the GoPro")
     args = parser.parse_args()
 
     try:
