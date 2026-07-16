@@ -28,19 +28,11 @@ def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, speed_pres
         f"mp4mux ! "
         f"filesink location={output_path}"
     )
-    cmd_ = (
-        f"gst-launch-1.0 -e "   
-        f"v4l2src device=/dev/video0 ! "
-        f"video/x-h264,width={width},height={height},framerate={fps}/1 ! "
-        f"h264parse ! "
-        f"mp4mux ! "
-        f"filesink location={output_path}"
-    )
 
     print("[Integrated] Press Ctrl+C to STOP recording\n")
 
     try:
-        proc = subprocess.Popen(cmd_, shell=True)
+        proc = subprocess.Popen(cmd, shell=True)
         proc.wait()
         print(f"[Integrated] Saved to {output_path}")
     except KeyboardInterrupt:

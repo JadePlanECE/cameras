@@ -64,18 +64,8 @@ async def main(output_dir:str, width:int, height:int, fps:int, bitrate:int, spee
             f"mp4mux ! "
             f"filesink location={output_path}"
         )
-        cmd_ = (
-            f"gst-launch-1.0 -e "
-            f"udpsrc port={GOPRO_STREAMING_PORT} "
-            f'caps="video/mpegts" ! '
-            f"tsdemux ! "
-            f"h264parse ! "
-            f"video/x-h264,fps={fps}/1 ! "
-            f"mp4mux ! "
-            f"filesink location={output_path}"
-        )
 
-        proc = subprocess.Popen(cmd_, shell=True)
+        proc = subprocess.Popen(cmd, shell=True)
         print("[GoPro] Press Ctrl+C to STOP recording\n")
 
         try:
